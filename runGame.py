@@ -6,7 +6,7 @@ from UI import GameBoard
 import time
 
 # 2 seconds
-def timeout(func, param, timeout_duration=2, default=None):
+def timeout(func, param, timeout_duration=2000, default=None):
     import signal
 
     class TimeoutError(Exception):
@@ -46,6 +46,7 @@ def runGame(ccgame, agents):
         if agent.action not in legal_actions:
             agent.action = random.choice(legal_actions)
         state = ccgame.succ(state, agent.action)
+        print (ccgame.board.getPlayerPiecePositions(state[0]))
     board.board = state[1]
     board.draw()
     board.update_idletasks()
@@ -86,7 +87,7 @@ def callback(ccgame):
     simpleGreedyAgent1 = SimpleGreedyAgent(ccgame)
     randomAgent = RandomAgent(ccgame)
     teamAgent = GayGayMinimaxAgent(ccgame)
-    simulateMultipleGames({1: simpleGreedyAgent1, 2: simpleGreedyAgent}, 5, ccgame)
+    simulateMultipleGames({1: teamAgent, 2: simpleGreedyAgent}, 5, ccgame)
 
 
 

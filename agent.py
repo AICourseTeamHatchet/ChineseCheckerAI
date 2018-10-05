@@ -39,7 +39,31 @@ class GayGayMinimaxAgent(Agent):
 
     # a stupid evaluation function of minimax algorithm
     def evalFunc(self, state):
-        pass
+        board = state[1]
+        me1 = board.getPlayerPiecePositions(state[0])
+        opponent = board.getPlayerPiecePositions(3 - state[0])
+
+        evaluate = 0
+        for position in me1:
+            evaluate += (20 - position[0])
+        for oppo_position in opponent:
+            evaluate -= (oppo_position[0])
+
+        # penalty = 0
+        # for row in range(1, board.piece_rows + 1):
+        #     for col in range(1, board.getColNum(row) + 1):
+        #         if board.board_status[(row, col)] == 1:
+        #             penalty += 1
+        #
+        # bonus = 0
+        # for row in range(board.size * 2 - board.piece_rows, board.size * 2):
+        #     for col in range(1, board.getColNum(row) + 1):
+        #         if board.board_status[(row, col)] == 2:
+        #             bonus += 1
+        #
+        # evaluate += (bonus * 2 - penalty * 2)
+
+        return evaluate
 
     """
     Minimax Algorithm for AI course
@@ -63,7 +87,7 @@ class GayGayMinimaxAgent(Agent):
         for action in self.game.actions(state):
             value = max(value, self.Min_value(self.game.succ(state, action), n-1, alpha, beta))
             if value >= beta:
-                if n==4:
+                if n==2:
                     return value, action
                 else:
                     return value
@@ -71,7 +95,7 @@ class GayGayMinimaxAgent(Agent):
                 alpha = value
                 best_action = action
             # alpha = max(alpha, value)
-        if n==4:
+        if n==2:
             return value, best_action
         else:
             return value
@@ -89,7 +113,7 @@ class GayGayMinimaxAgent(Agent):
         return value
 
     def Minimax(self, state, n, alpha=sys.maxsize * -1, beta=sys.maxsize):
-        value, action = Max_value(state, n, alpha, beta)
+        value, action = self.Max_value(state, n, alpha, beta)
         return action
 
     # a minimax agent unknow what it is doing yet
@@ -99,8 +123,8 @@ class GayGayMinimaxAgent(Agent):
 
         player = self.game.player(state)
         # depth of minimax algorithm
-        n = 4
+        n = 2
         ### START CODE HERE ###
-        best_action = self.Minimax(state, n, player=state[0], me=state[0])
+        best_action = self.Minimax(state, n)
         self.action = best_action
         ### END CODE HERE ###

@@ -9,16 +9,18 @@ import sys
 import math
 
 # get the first and last element based on position and player
-def getFristLastElement(agent_pos, player):
-    last = first = -1
-
+def getFirstLastElement(agent_pos, player):
     if player == 1:
+        first = agent_pos[0][0]
+        last = agent_pos[0][0]
         for position in agent_pos:
             if position[0] < first:
                 first = position[0]
             if position[0] > last:
                 last = position[0]
     else:
+        first = agent_pos[0][0]
+        last = agent_pos[0][0]
         for position in agent_pos:
             if position[0] > first:
                 first = position[0]
@@ -29,7 +31,7 @@ def getFristLastElement(agent_pos, player):
 
 # is the game starting battle with each other now
 def isBattle(MyFirst, HerFirst, player):
-    if player == 1:
+    if player == 2:
         return (MyFirst - HerFirst >= 2)
     else:
         return (HerFirst - MyFirst >= 2)

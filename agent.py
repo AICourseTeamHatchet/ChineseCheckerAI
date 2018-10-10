@@ -98,8 +98,11 @@ class GayGayMinimaxAgent(Agent):
         return eval_value
 
 
-    def eval_func(self, agent_pos, opponent_pos):
+    def eval_func(self, state):
         evaluate = 0
+        board = state[1]
+        agent_pos = board.getPlayerPiecePositions(state[0])
+        opponent_pos = board.getPlayerPiecePositions(3 - state[0])
         agent_pos.sort()
         opponent_pos.sort()
         #print(self.early_game(agent_pos, opponent_pos), self.mid_game(agent_pos, opponent_pos),
@@ -116,6 +119,10 @@ class GayGayMinimaxAgent(Agent):
 
         return evaluate
 
+    # Used for minimax pruning
+    def takeDepth(self, action):
+        return action[1][0] - action[0][0]
+
     def max_value(self, state, n, alpha, beta):
         """
         This function determines the maximum value for the current state.
@@ -131,7 +138,9 @@ class GayGayMinimaxAgent(Agent):
         value = sys.maxsize * -1
         best_action = None
 
-        for action in self.game.actions(state):
+        actions = self.game.actions(state)
+        actions.sort(key=self.takeDepth)
+        for action in actions:
             value = max(value, self.min_value(self.game.succ(state, action), n-1, alpha, beta))
             if value >= beta:
                 if n == 2:
@@ -182,7 +191,22 @@ class GayGayMinimaxAgent(Agent):
     value / action : the value evaluated by the eval_func, and the action may be taken
     """
     def maximax_value(self, state, n):
+        if n == 0:
+            return self.eval_func(state)
 
+        value = sys.maxsize * -1
+        best_action = None
+
+        for action in self.game.actions(state):
+            next_value = self.maximax_value(self.game.succ(state, action), n-1)
+            if value < next_value:
+                value = next_value
+                best_action = action
+
+        if n == 2:
+            return value, best_action
+        else:
+            return value
 
     def maximax(self, state, n):
         value, action = self.maximax_value(state, n)
@@ -196,14 +220,18 @@ class GayGayMinimaxAgent(Agent):
         n = 2 # Referring to the depth
         ### START CODE HERE ###
         best_action = None
-        agent_pos = board.getPlayerPiecePositions(state[0])
-        opponent_pos = board.getPlayerPiecePositions(3 - state[0])
+        agent_pos = state[1].getPlayerPiecePositions(player)
+        opponent_pos = state[1].getPlayerPiecePositions(3 - player)
+        myFirst, myLast = getFirstLastElement(agent_pos, player)
+        herFirst, herLast = getFirstLastElement(opponent_pos, 3 - player)
 
-        if isBattle():
+        if isBattle(myFirst, herFirst, player):
             best_action = self.minimax(state, n)
-        elif isEnding():
-            pass
+            print ("min")
+        # elif isEnding():
+        #     pass
         else:
+            print ("max")
             self.maximax(state, n)
 
         if best_action == None:

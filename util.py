@@ -37,11 +37,11 @@ def isBattle(MyFirst, HerFirst, player):
         return (HerFirst - MyFirst >= 2)
 
 # is the game going to the end of the state now
-def isEnding(MyLast, HerLast, player):
+def isEnding(MyLast, HerLast, player, k = 0):
     if player == 1:
-        return (MyLast <= HerLast)
+        return (MyLast + k <= HerLast)
     else:
-        return (HerLast <= MyLast)
+        return (HerLast + k <= MyLast)
 
 # getting vertical distance to goal state sum
 def vertical_distance(agent_pos, player):
@@ -57,11 +57,11 @@ def vertical_distance(agent_pos, player):
     return distance
 
 # getting the distance from all the nodes to the mid column line
-def midline_distance(agent_pos):
+def midline_distance(agent_pos, board):
     distance = 0
 
     for position in agent_pos:
-        distance += abs(position[1] - board.getColNum(position[0]))
+        distance += abs(position[1] - board.getColNum(position[0]) / 2)
 
     return distance
 
@@ -76,3 +76,12 @@ def check_looseness(agent_pos):
         distance += abs(position[0] - average)
 
     return distance
+
+# Check whether the player has reached the terminal state(actually not the same with the isEnd() function)
+# This is a bool function
+def player_win(agent_pos):
+    terminal_state = [(1, 1), (2, 1), (2, 2), (3, 1), (3, 2), (3, 3), (4, 1), (4, 2), (4, 3), (4, 4)]
+    for p in agent_pos:
+        if p not in terminal_state:
+            return False
+    return True

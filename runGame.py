@@ -3,6 +3,8 @@ from game import ChineseChecker
 import datetime
 import tkinter as tk
 from UI import GameBoard
+from ourAgent import *
+from TCDagent import *
 import time
 
 # 2 seconds
@@ -27,7 +29,6 @@ def timeout(func, param, timeout_duration=2000, default=None):
 
 def runGame(ccgame, agents):
     state = ccgame.startState()
-    print(state)
     max_iter = 200  # deal with some stuck situations
     iter = 0
     start = datetime.datetime.now()
@@ -46,7 +47,7 @@ def runGame(ccgame, agents):
         if agent.action not in legal_actions:
             agent.action = random.choice(legal_actions)
         state = ccgame.succ(state, agent.action)
-        print (ccgame.board.getPlayerPiecePositions(state[0]))
+        # print (ccgame.board.getPlayerPiecePositions(state[0]))
     board.board = state[1]
     board.draw()
     board.update_idletasks()
@@ -87,7 +88,8 @@ def callback(ccgame):
     simpleGreedyAgent1 = SimpleGreedyAgent(ccgame)
     randomAgent = RandomAgent(ccgame)
     teamAgent = GayGayMinimaxAgent(ccgame)
-    simulateMultipleGames({1: teamAgent, 2: simpleGreedyAgent}, 5, ccgame)
+    gayAgent = DadaMiniABPrunWithLateState(ccgame)
+    simulateMultipleGames({1: teamAgent, 2: gayAgent}, 5, ccgame)
 
 
 

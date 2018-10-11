@@ -1,43 +1,9 @@
-import random, re, datetime
-import sys
-import math
 from util import *
 from queue import PriorityQueue
-import copy
+from agent import Agent
+import random
 
-class Agent(object):
-    def __init__(self, game):
-        self.game = game
-
-    def getAction(self, state):
-        raise Exception("Not implemented yet")
-
-
-class RandomAgent(Agent):
-    def getAction(self, state):
-        legal_actions = self.game.actions(state)
-        self.action = random.choice(legal_actions)
-
-
-class SimpleGreedyAgent(Agent):
-    # a one-step-lookahead greedy agent that returns action with max vertical advance
-    def getAction(self, state):
-        legal_actions = self.game.actions(state)
-
-        self.action = random.choice(legal_actions)
-
-        player = self.game.player(state)
-        if player == 1:
-            max_vertical_advance_one_step = max([action[0][0] - action[1][0] for action in legal_actions])
-            max_actions = [action for action in legal_actions if
-                           action[0][0] - action[1][0] == max_vertical_advance_one_step]
-        else:
-            max_vertical_advance_one_step = max([action[1][0] - action[0][0] for action in legal_actions])
-            max_actions = [action for action in legal_actions if
-                           action[1][0] - action[0][0] == max_vertical_advance_one_step]
-        self.action = random.choice(max_actions)
-
-class GayGay1MinimaxAgent(Agent):
+class GayGayMinimaxAgent(Agent):
     """
     This class implements the minimax algorithm, using alpha-beta pruning as well.
     """
@@ -58,9 +24,9 @@ class GayGay1MinimaxAgent(Agent):
         """
         eval_value = 0
         for pos_a in agent_pos:
-            eval_value += (pos_a[0])
+            eval_value += (20 - pos_a[0])
         for pos_o in opponent_pos:
-            eval_value -= (20 - pos_o[0])
+            eval_value -= pos_o[0]
         return eval_value
 
     def mid_game(self, agent_pos, opponent_pos):
@@ -95,7 +61,62 @@ class GayGay1MinimaxAgent(Agent):
         for pos in agent_pos:
             eval_value -= pos[0]
 
+
         return eval_value
+
+    def h_function(self, agent_pos):
+        """
+        This function defines the heuristic function for the AStar algorithm
+        :param: agent_pos: The position of the agent's checkers
+        :return: h value.
+        """
+        terminal_state = [(1, 1), (2, 1), (2, 2), (3, 1), (3, 2), (3, 3), (4, 1), (4, 2), (4, 3), (4, 4)]
+        count = 0
+        for p in agent_pos:
+            if p in terminal_state:
+                count -= 300
+        if count == 0:
+            count += 1000
+        agent_pos.sort()
+        for i in range (10):
+            count += agent_pos[i][0]
+
+        return count
+
+    def AstarForEnding(self, state):
+        """
+        This function deals with the ending of the game, preventing the occurrence of some
+        annoying conditions.
+        :param agent_pos: The position of the agent's checkers
+        :return: The path for the checkers. Stored in a list, each element with form (pos, adj_pos)
+        """
+        board = state[1]
+        agent_pos = board.getPlayerPiecePositions(state[0])
+        Astar_queue = PriorityQueue()
+        final_path = []
+        initial_h = 0
+        count = 0
+        while not player_win(agent_pos) and len(final_path) < 8:
+            legal_actions = self.game.actions(state)
+            for ac in legal_actions:
+                count += 1
+                new_final_path = copy.copy(final_path)
+                new_state = self.game.succ(state, ac)
+                new_state_tuple = (3 - new_state[0], new_state[1])
+                new_board = new_state_tuple[1]
+                new_agent_pos = new_board.getPlayerPiecePositions(new_state_tuple[0])
+                #print (ac, agent_pos, new_agent_pos)
+                from_pos = [p for p in agent_pos if p not in new_agent_pos][0]
+                to_pos = [p for p in new_agent_pos if p not in agent_pos][0]
+                #print (from_pos, to_pos)
+                new_final_path.append((from_pos, to_pos))
+                Astar_queue.put((initial_h + self.h_function(new_agent_pos), new_final_path, count, new_state_tuple))
+            initial_h, final_path, _, state = Astar_queue.get()
+            board = state[1]
+            agent_pos = board.getPlayerPiecePositions(state[0])
+            print (final_path)
+
+        return final_path[0]
 
     def eval_func(self, state):
         evaluate = 0
@@ -118,6 +139,48 @@ class GayGay1MinimaxAgent(Agent):
 
         return evaluate
 
+    def feature_eval(self, state):
+        evaluate = 0
+        player = state[0]
+        board = state[1]
+        agent_pos = board.getPlayerPiecePositions(state[0])
+        opponent_pos = board.getPlayerPiecePositions(3 - state[0])
+        agent_pos.sort()
+        opponent_pos.sort()
+
+        """
+        Distances to win for both of us
+        """
+        myDistanceWin = vertical_distance(agent_pos, player)
+        herDistanceWin = vertical_distance(opponent_pos, 3 - player)
+
+        """
+        Distances to the center of the puzzle
+        """
+        myDistanceCenter = midline_distance(agent_pos, state[1])
+        # herDistanceCenter = midline_distance(opponent_pos)
+
+        """
+        Moving distances summing up
+        """
+        actions = self.game.actions(state)
+        last = actions[0][0]
+        f = {}
+        stepping = 0
+        for action in actions:
+            if action[0] in f.keys():
+                f[action[0]].append(action[0][0] - action[1][0])
+            else:
+                f[action[0]] = []
+                f[action[0]].append(action[0][0] - action[1][0])
+
+        for i in f.keys():
+            stepping += max(f[i])
+        # stepping = sum([action[0][0] - action[1][0] for action in actions])
+
+        evaluate = 1.7 * (myDistanceWin - herDistanceWin) + 0.14 * (-myDistanceCenter) + 0.5 * stepping
+        return evaluate
+
     # Used for minimax pruning
     def takeDepth(self, action):
         return action[1][0] - action[0][0]
@@ -132,7 +195,7 @@ class GayGay1MinimaxAgent(Agent):
         :return: The result value for the state
         """
         if n == 0:
-            return self.eval_func(state)
+            return self.feature_eval(state)
 
         value = sys.maxsize * -1
         best_action = None
@@ -165,10 +228,13 @@ class GayGay1MinimaxAgent(Agent):
         :return: :)
         """
         if n == 0:
-            return self.eval_func(state)
+            return self.feature_eval(state)
 
         value = sys.maxsize
-        for action in self.game.actions(state):
+        actions = self.game.actions(state)
+        actions.sort(key=self.takeDepth)
+        actions = actions[::-1]
+        for action in actions:
             value = min(value, self.max_value(self.game.succ(state, action), n-1, alpha, beta))
             if value <= alpha:
                 return value
@@ -180,9 +246,43 @@ class GayGay1MinimaxAgent(Agent):
         value, action = self.max_value(state, n, alpha, beta)
         return action
 
+    """
+    Function calculating maximax
+    maybe used at the beginning of the game
+    inputs
+    state : u know, the current state of the puzzle
+    n : recursion depth
+    outputs
+    value / action : the value evaluated by the eval_func, and the action may be taken
+    """
+    def maximax_value(self, state, n):
+        if n == 0:
+            return self.feature_eval(state)
+
+        value = sys.maxsize * -1
+        best_action = None
+
+        actions = self.game.actions(state)
+        actions.sort(key=self.takeDepth)
+        for action in actions:
+            next_value = self.maximax_value(self.game.succ(state, action), n-1)
+            if value < next_value:
+                value = next_value
+                best_action = action
+
+        if n == 2:
+            return value, best_action
+        else:
+            return value
+
+    def maximax(self, state, n):
+        value, action = self.maximax_value(state, n)
+        return action
+
     def getAction(self, state):
         legal_actions = self.game.actions(state)
         self.action = random.choice(legal_actions)
+        print (self.action)
 
         player = self.game.player(state)
         n = 2 # Referring to the depth
@@ -193,12 +293,23 @@ class GayGay1MinimaxAgent(Agent):
         myFirst, myLast = getFirstLastElement(agent_pos, player)
         herFirst, herLast = getFirstLastElement(opponent_pos, 3 - player)
 
-        best_action = self.minimax(state, n)
+        if isBattle(myFirst, herFirst, player) and not isEnding(myLast, herLast, player):
+            print ("min")
+            best_action = self.minimax(state, n)
+        elif isEnding(myLast, herLast, player):
+            max_vertical_advance_one_step = max([action[0][0] - action[1][0] for action in legal_actions])
+            max_actions = [action for action in legal_actions if
+                           action[0][0] - action[1][0] == max_vertical_advance_one_step]
+            self.action = random.choice(max_actions)
+        else:
+            print ("max")
+            best_action = self.maximax(state, n)
 
         if best_action == None:
             print ("random")
             pass
         else:
             self.action = best_action
+        print (self.action)
 
         ### END CODE HERE ###

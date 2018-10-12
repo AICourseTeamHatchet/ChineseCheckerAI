@@ -4,11 +4,11 @@ import datetime
 import tkinter as tk
 from UI import GameBoard
 from ourAgent import *
-from TCDagent import *
+# from TCDagent import *
 import time
 
 # 2 seconds
-def timeout(func, param, timeout_duration=2000, default=None):
+def timeout(func, param, timeout_duration=8, default=None):
     import signal
 
     class TimeoutError(Exception):
@@ -88,10 +88,8 @@ def callback(ccgame):
     simpleGreedyAgent1 = SimpleGreedyAgent(ccgame)
     randomAgent = RandomAgent(ccgame)
     teamAgent = GayGayMinimaxAgent(ccgame)
-    gayAgent = DadaMiniABPrunWithLateState(ccgame)
-    simulateMultipleGames({1: teamAgent, 2: gayAgent}, 5, ccgame)
-
-
+    gayAgent = GayGay1MinimaxAgent(ccgame)
+    simulateMultipleGames({1: teamAgent, 2: gayAgent}, 10, ccgame)
 
 if __name__ == '__main__':
     ccgame = ChineseChecker(10, 4)

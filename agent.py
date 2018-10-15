@@ -148,6 +148,7 @@ class GayGay1MinimaxAgent(Agent):
                     return value
             if value > alpha:
                 alpha = value
+                self.action = action
                 best_action = action
         if n == 2:
             return value, best_action

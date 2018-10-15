@@ -6,9 +6,10 @@ from UI import GameBoard
 from ourAgent import *
 # from TCDagent import *
 import time
+from lxdagent import *
 
 # 2 seconds
-def timeout(func, param, timeout_duration=8, default=None):
+def timeout(func, param, timeout_duration=2, default=None):
     import signal
 
     class TimeoutError(Exception):
@@ -85,11 +86,11 @@ def simulateMultipleGames(agents_dict, simulation_times, ccgame):
 def callback(ccgame):
     B.destroy()
     simpleGreedyAgent = SimpleGreedyAgent(ccgame)
-    simpleGreedyAgent1 = SimpleGreedyAgent(ccgame)
+    simpleGreedyAgent1 = FODMinimaxAgent(ccgame)
     randomAgent = RandomAgent(ccgame)
     teamAgent = GayGayMinimaxAgent(ccgame)
     gayAgent = GayGay1MinimaxAgent(ccgame)
-    simulateMultipleGames({1: teamAgent, 2: gayAgent}, 10, ccgame)
+    simulateMultipleGames({1: simpleGreedyAgent1, 2: teamAgent}, 10, ccgame)
 
 if __name__ == '__main__':
     ccgame = ChineseChecker(10, 4)
